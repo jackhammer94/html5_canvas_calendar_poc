@@ -1,0 +1,13 @@
+body{
+  background-color: rgb(230, 230, 230);
+}
+
+.calendar{
+  background-color: rgb(238, 254, 254);
+  width: 1200px;
+  margin: 50px auto;
+}
+
+.event{
+  border-left: 4px solid green;
+}

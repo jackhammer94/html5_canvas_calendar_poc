@@ -1,0 +1,17 @@
+{
+  "events": [
+    {
+      "name": "test1",
+      "location": "india",
+      "startsOn": {
+        "date": "",
+        "time": ""
+      },
+      "endsOn": {
+        "date": "",
+        "time": ""
+      },
+      "isAllDay": "true"
+    }
+  ]
+}
