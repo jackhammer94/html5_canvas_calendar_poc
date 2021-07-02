@@ -221,68 +221,136 @@ window.onload = function () {
   }
 
   //disconnected graph doesnt work
-  // addEdge("1995-12-17T07:00", "1995-12-17T08:00")
-  // addEdge("1995-12-17T07:30", "1995-12-17T09:00")
-  // addEdge("1995-12-17T08:00", "1995-12-17T08:30")
-
-  // addEdge("1995-12-17T09:00", "1995-12-17T09:30")
-  // addEdge("1995-12-17T09:00", "1995-12-17T10:00")
-  // addEdge("1995-12-17T09:00", "1995-12-17T10:30")
-  // addEdge("1995-12-17T09:30", "1995-12-17T10:30")
-  // addEdge("1995-12-17T09:30", "1995-12-17T11:00")
-  // addEdge("1995-12-17T10:00", "1995-12-17T11:00")
-  // addEdge("1995-12-17T10:30", "1995-12-17T11:30")
-  // addEdge("1995-12-17T11:30", "1995-12-17T12:30")
-
+  addEdge("1995-12-17T07:00", "1995-12-17T08:00")
+  addEdge("1995-12-17T07:30", "1995-12-17T09:00")
+  addEdge("1995-12-17T08:00", "1995-12-17T08:30")
+  addEdge("1995-12-17T09:00", "1995-12-17T09:30")
   addEdge("1995-12-17T09:00", "1995-12-17T10:00")
-  addEdge("1995-12-17T11:00", "1995-12-17T12:30")
-  addEdge("1995-12-17T13:00", "1995-12-17T14:30")
-  addEdge("1995-12-17T14:00", "1995-12-17T15:00")
-  addEdge("1995-12-17T17:00", "1995-12-17T20:00")
-  addEdge("1995-12-17T17:30", "1995-12-17T19:00")
-  addEdge("1995-12-17T17:00", "1995-12-17T17:30")
+  addEdge("1995-12-17T09:00", "1995-12-17T10:30")
+  addEdge("1995-12-17T09:30", "1995-12-17T10:30")
+  addEdge("1995-12-17T09:30", "1995-12-17T11:00")
+  addEdge("1995-12-17T10:00", "1995-12-17T11:00")
+  addEdge("1995-12-17T10:30", "1995-12-17T11:30")
+  addEdge("1995-12-17T11:30", "1995-12-17T12:30")
+
+  // addEdge("1995-12-17T09:00", "1995-12-17T10:00")
+  // addEdge("1995-12-17T11:00", "1995-12-17T12:30")
+  // addEdge("1995-12-17T13:00", "1995-12-17T14:30")
+  // addEdge("1995-12-17T14:00", "1995-12-17T15:00")
+  // addEdge("1995-12-17T17:00", "1995-12-17T20:00")
+  // addEdge("1995-12-17T17:30", "1995-12-17T19:00")
+  // addEdge("1995-12-17T17:00", "1995-12-17T17:30")
 
   console.log('graph', graph)
 
-  function getNonoverlappingEvents() {
-    let visited = {}
-    Object.keys(graph).forEach(node => {
-      visited[node] = false
-    })
-    let largestKnownTime =  Object.keys(graph)[0]
+  // function getNonoverlappingEvents() {
+  //   let visited = {}
+  //   Object.keys(graph).forEach(node => {
+  //     visited[node] = false
+  //   })
+    
+  //   let eventStarts ={}
+  //   Object.keys(graph).forEach((eventStart)=>{
+  //     eventStarts[eventStart] = true
+  //   })
 
-    Object.keys(graph).forEach((eventStart)=>{
-      console.log('--------------------event start', eventStart)
-      let queue = []
-      queue.push(eventStart)
-      // queue.push("1995-12-17T09:00")
+  //   let largestKnownTime =  Object.keys(graph)[0]
+
+  //   Object.keys(graph).forEach((eventStart)=>{
+  //     console.log('--------------------event start', eventStart)
+  //     let queue = []
+  //     queue.push(eventStart)
+  //     // queue.push("1995-12-17T09:00")
      
-      while (queue.length > 0) {
-        let node = queue.shift()
-        if (new Date(node) >= new Date(largestKnownTime)) {
-          console.log('non overlapping item', node)
+  //     while (queue.length > 0) {
+  //       let node = queue.shift()
+  //       if (new Date(node) >= new Date(largestKnownTime)) {
+  //         console.log('non overlapping item', node)
+  //       }
+  //       // console.log('visiting', node)
+
+  //       if (node in graph) {
+
+  //         for (var child of graph[node]) {
+
+  //           if (!visited[child]) {
+  //             if (new Date(child) > new Date(largestKnownTime)) {
+  //               largestKnownTime = child
+  //               // console.log('------new largestKnownTime', largestKnownTime)
+  //             }
+  //             else{
+  //               // console.log(`${child} is less than largestKnownTime ${largestKnownTime}`)
+  //             }
+  //             if(child in eventStarts){
+  //               queue.push(child)
+  //             }
+  //             visited[child] = true
+  //           }
+  //         }
+  //       }
+  //     }
+  //   })
+
+  // }
+
+  function getNonoverlappingEvents() {
+    
+    let startDate = new Date("1995-12-17T07:00")
+    let endDate = new Date("1995-12-17T17:30")
+    let largestKnownTime = "1995-12-17T07:00"
+    let nextBlock = startDate
+    let timeBlocks = []
+    while(nextBlock < endDate){
+    
+
+      if(getDateString(nextBlock) in graph){
+        // console.log(`next block  found ${getDateString(nextBlock)}`)
+        let eventStart = getDateString(nextBlock)
+        if(new Date(eventStart) >= new Date(largestKnownTime))
+        {
+          console.log("non overlapping event", eventStart)
         }
-        // console.log('visiting', node)
-
-        if (node in graph) {
-          for (var child of graph[node]) {
-
-            if (!visited[child]) {
-              if (new Date(child) > new Date(largestKnownTime)) {
-                largestKnownTime = child
-                // console.log('------new largestKnownTime', largestKnownTime)
-              }
-              else{
-                // console.log(`${child} is less than largestKnownTime ${largestKnownTime}`)
-              }
-              queue.push(child)
-              visited[child] = true
-            }
+        graph[eventStart].forEach((eventEnd) => {
+          if(new Date(eventEnd) > new Date(largestKnownTime)){
+            largestKnownTime = eventEnd
+            // console.log('------new largestKnownTime', largestKnownTime)
           }
-        }
+          else{
+            // console.log(`${eventEnd} is less than largestKnownTime ${largestKnownTime}`)
+          }
+        })
       }
-    })
+      else{
+        // console.log(`next block not found ${getDateString(nextBlock)}`)
+      }
 
+      let hrs  = new Date(nextBlock).getMinutes()
+      nextBlock = new Date(nextBlock)
+      nextBlock.setMinutes(hrs+30)
+      // console.log(`next block is ${getDateString(nextBlock)}`)
+    }
+    // Object.keys(graph).forEach((eventStart)=>{
+    //   if(eventStart >= largestKnownTime)
+    //   {
+    //     console.log("non overlapping event", eventStart)
+    //   }
+    //   graph[eventStart].forEach((eventEnd) => {
+    //     if(eventEnd > largestKnownTime){
+    //       largestKnownTime = eventEnd
+    //     }
+    //   })
+      
+    // })
+  }
+
+  function getDateString(d){
+    var date = ("0" + d.getDate()).slice(-2)
+    var month =  ("0"+(d.getMonth()+1)).slice(-2)
+    var year =  d.getFullYear()
+    var hrs = ("0" + d.getHours()).slice(-2)
+    var min = ("0" + d.getMinutes()).slice(-2)
+    var datestring =year + "-" + month + "-" + date + "T" + hrs + ":" + min;
+    return datestring;
   }
   getNonoverlappingEvents()
 }
