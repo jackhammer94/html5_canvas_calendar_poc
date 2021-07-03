@@ -17,6 +17,13 @@ window.onload = function () {
         startsOn: "1995-12-17T00:00",
         endsOn: "1995-12-17T00:00",
         isAllDay: true
+      }, 
+      {
+        name: 'Sample Item3',
+        location: 'Sample Location',
+        startsOn: "1995-12-17T00:00",
+        endsOn: "1995-12-17T00:00",
+        isAllDay: true
       }
     ]
   };
@@ -50,7 +57,7 @@ window.onload = function () {
   addEvent("1995-12-17T17:00", "1995-12-17T20:00")
   addEvent("1995-12-17T17:30", "1995-12-17T19:00")
   addEvent("1995-12-17T17:00", "1995-12-17T17:30")
-
+  addEvent("1995-12-17T14:00", "1995-12-17T17:30")
   console.log(data)
 
   renderCalendar();
@@ -72,7 +79,7 @@ window.onload = function () {
       timePeriodMarkerOffset: 50,
       totalCanvasWidth: 1200,
       eventBlockStripeWidth: 5,
-      getEventAreaWidth(){
+      getEventAreaWidth() {
         return this.totalCanvasWidth - this.eventAreaOffset
       },
       getMidHourOffset() {
@@ -81,8 +88,8 @@ window.onload = function () {
       getSmallestEventBlockHeight() {
         return this.hourBlockHeight / (60 / this.smallestPossibleEventDurationInMinutes);
       },
-      getEventAreaYOffset(){
-        return this.headerHeight + (this.allDayEventsCount*this.getSmallestEventBlockHeight())
+      getEventAreaYOffset() {
+        return this.headerHeight + (this.allDayEventsCount * this.getSmallestEventBlockHeight()) + 20
       }
     }
 
@@ -146,27 +153,24 @@ window.onload = function () {
 
       let blockTime = timeBlockEventStartMap[timeBlock].time
 
-      let timeOffset =canvasOptions.getEventAreaYOffset() + (timeBlock * (smallestEventBlockHeight));
+      let timeOffset = canvasOptions.getEventAreaYOffset() + (timeBlock * (smallestEventBlockHeight));
       let timePeriod = getTimePeriod(blockTime)
       ctx.fillStyle = timePeriod === 'AM' ? 'rgb(254, 246, 248)' : 'rgb(238, 254, 254)';
       ctx.fillRect(0, timeOffset, totalCanvasWidth, smallestEventBlockHeight);
+      let markerOffset = isHourStart(blockTime) ? hourMarkerOffset : midHourMarkerOffset;
 
       //Print AM/PM
       if (isAMStart(blockTime) || isPMStart(blockTime) || timeBlock == 0) {
         ctx.font = `${timeMarkerFontSize}px sans-serif`;
-        ctx.fillStyle = timePeriod === 'AM' ? 'rgb(237, 30, 121)' : 'rgb(63, 169, 245)';
+        let periodColor = timePeriod === 'AM' ? 'rgb(237, 30, 121)' : 'rgb(63, 169, 245)'
+        ctx.fillStyle = periodColor;
         ctx.fillText(getTimePeriod(blockTime), timePeriodMarkerOffset, timeOffset + timeMarkerFontSize);
+        drawLine(ctx, 0, timeOffset, totalCanvasWidth, timeOffset, periodColor)
       }
-
-      //Draw line
-      let markerOffset = isHourStart(blockTime) ? hourMarkerOffset : midHourMarkerOffset;
-      ctx.beginPath();
-      ctx.lineWidth = 0.5;
-      ctx.moveTo(markerOffset, timeOffset);
-      ctx.lineTo(totalCanvasWidth, timeOffset);
-      ctx.strokeStyle = isHourStart(blockTime) ? 'black' : 'gray';
-      ctx.stroke();
-
+      else {
+        let color = isHourStart(blockTime) ? 'black' : 'gray'
+        drawLine(ctx, markerOffset, timeOffset, totalCanvasWidth, timeOffset, color)
+      }
       //Print Time
       ctx.font = isHourStart(blockTime) ? `normal bold ${lineHeight}px sans-serif` : `normal ${lineHeight}px sans-serif`;
       ctx.fillStyle = isHourStart(blockTime) ? 'black' : 'gray';
@@ -175,24 +179,37 @@ window.onload = function () {
     return { smallestEventBlockHeight, eventAreaWidth, smallestPossibleEventDurationInMinutes, eventAreaOffset, gutter, lineHeight };
   }
 
-  function renderHeader(canvasOptions, ctx, smallestEventTime){
-    ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, canvasOptions.totalCanvasWidth, canvasOptions.headerHeight);
-    ctx.fillStyle = "black";
-    ctx.font =  `normal ${canvasOptions.lineHeight}px sans-serif`
-    ctx.fillText(smallestEventTime.toDateString().toUpperCase(),  canvasOptions.totalCanvasWidth - 200, 50);
+  function drawLine(ctx, xStart, yStart, xEnd, yEnd, color) {
+    ctx.beginPath();
+    ctx.lineWidth = 0.5;
+    ctx.moveTo(xStart, yStart);
+    ctx.lineTo(xEnd, yEnd);
+    ctx.strokeStyle = color;
+    ctx.stroke();
   }
 
-  function renderAllDayEvents(events, canvasOptions, ctx){
+  function renderHeader(canvasOptions, ctx, smallestEventTime) {
+    const totalCanvasWidth = canvasOptions.totalCanvasWidth
+    const headerHeight = canvasOptions.headerHeight
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, totalCanvasWidth, canvasOptions.headerHeight);
+    ctx.fillStyle = "black";
+    ctx.font = `normal 16px sans-serif`
+    const date = smallestEventTime.toLocaleDateString("en-US", { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase()
+    ctx.fillText(date, totalCanvasWidth - 250, 50);
+    drawLine(ctx, 0, headerHeight, totalCanvasWidth, headerHeight, "black")
+  }
+
+  function renderAllDayEvents(events, canvasOptions, ctx) {
     events.forEach((event, index) => {
-      const eventYOffset = canvasOptions.headerHeight + index * canvasOptions.getSmallestEventBlockHeight()
+      const eventYOffset = canvasOptions.headerHeight + canvasOptions.gutter + index * canvasOptions.getSmallestEventBlockHeight()
       const eventXOffset = canvasOptions.eventAreaOffset
       const width = canvasOptions.getEventAreaWidth()
       const height = canvasOptions.getSmallestEventBlockHeight()
       ctx.fillStyle = "white";
       ctx.fillRect(eventXOffset, eventYOffset, width, height);
-     
-      renderEventTime(ctx, canvasOptions,eventYOffset, eventXOffset, event);
+
+      renderEventTime(ctx, canvasOptions, eventYOffset, eventXOffset, event);
       renderEventName(ctx, canvasOptions, eventYOffset, eventXOffset, event, width);
       renderEventLocation(ctx, canvasOptions, eventYOffset, eventXOffset, event, width);
       drawStripe(ctx, canvasOptions, eventYOffset, eventXOffset, height);
@@ -231,12 +248,12 @@ window.onload = function () {
       let eventYOffset = timeOffset + eventBlockStart
       let eventBlockHeight = smallestEventBlockHeight * (eventDuration / smallestPossibleEventDurationInMinutes);
       let eventXOffset = eventAreaOffset + eventBlock * (width + gutter);
-      
+
       ctx.fillStyle = "white";
       ctx.fillRect(eventXOffset, eventYOffset, width, eventBlockHeight);
 
       //event info
-      renderEventTime(ctx, canvasOptions,eventYOffset, eventXOffset, event);
+      renderEventTime(ctx, canvasOptions, eventYOffset, eventXOffset, event);
       renderEventName(ctx, canvasOptions, eventYOffset, eventXOffset, event, width);
       renderEventLocation(ctx, canvasOptions, eventYOffset, eventXOffset, event, width);
       drawStripe(ctx, canvasOptions, eventYOffset, eventXOffset, eventBlockHeight);
@@ -259,7 +276,7 @@ window.onload = function () {
     ctx.font = `normal bold ${canvasOptions.lineHeight}px sans-serif`;
     ctx.fillStyle = 'black';
     const isUnitEvent = eventDuration === canvasOptions.smallestPossibleEventDurationInMinutes
-    const nameYOffset = eventYOffset + ( isUnitEvent || event.isAllDay ? (lineHeight + canvasOptions.lineSpacing) : (lineHeight + canvasOptions.lineSpacing) * 2);
+    const nameYOffset = eventYOffset + (isUnitEvent || event.isAllDay ? (lineHeight + canvasOptions.lineSpacing) : (lineHeight + canvasOptions.lineSpacing) * 2);
     const nameXOffset = isUnitEvent || event.isAllDay ? eventTextOffset + ctx.measureText("00:00AM-").width : eventTextOffset;
     const nameText = nameXOffset + ctx.measureText(event.name).width < eventXOffset + width ? event.name : event.name.slice(0, "00:00AM-".length - 3) + "...";
     // console.log(`name x-${nameXOffset + ctx.measureText(event.name).width} width: ${eventXOffset + width} diff:${(eventXOffset + width) - (nameXOffset + ctx.measureText(event.name).width)}`);
@@ -281,8 +298,8 @@ window.onload = function () {
     const locationYOffset = eventYOffset + lineHeightOffset
 
     const lineWidthOffset = isUnitEvent || event.isAllDay ? ctx.measureText("00:00AM-").width + ctx.measureText(event.name).width : 0
-    const locationXOffset =  eventXOffset + canvasOptions.eventBlockStripeWidth + 2 + lineWidthOffset;
-    
+    const locationXOffset = eventXOffset + canvasOptions.eventBlockStripeWidth + 2 + lineWidthOffset;
+
     const locationText = locationXOffset + ctx.measureText(event.location).width < eventXOffset + width ? event.location : event.location.slice(0, event.name.length - 3) + "...";
     ctx.font = `normal lighter ${canvasOptions.lineHeight}px sans-serif`;
     ctx.fillStyle = '#00bf00';
@@ -401,7 +418,8 @@ window.onload = function () {
 
   function getTimeString(d) {
     var date = new Date(d)
-    var hrs = ("0" + date.getHours()).slice(-2)
+    var convertedHrs = date.getHours() == 12 ? 12 : date.getHours()%12
+    var hrs = ("0" + convertedHrs).slice(-2)
     var min = ("0" + date.getMinutes()).slice(-2)
     return `${hrs}:${min}`;
   }
