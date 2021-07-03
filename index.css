@@ -3,7 +3,7 @@ body{
 }
 
 .calendar{
-  background-color: rgb(238, 254, 254);
+  /* background-color: rgb(238, 254, 254); */
   width: 1200px;
   margin: 50px auto;
   height: 1000px;
