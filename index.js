@@ -9,8 +9,8 @@ window.onload = function () {
 
   function addEvent(start, end){
     data.events.push({
-      name: 'testEvent',
-      location: 'india',
+      name: 'Sample Item',
+      location: 'Sample Location',
       startsOn: start,
       endsOn: end,
       isAllDay: false
@@ -46,37 +46,43 @@ window.onload = function () {
     var ctx = canvas.getContext("2d");
 
     let canvasOptions = {
-      lineHeight: 10,
+      lineHeight: 17.332,
+      lineSpacing: 6,
       timeMarkerFontSize: 25,
       gutter: 10,
       hourBlockHeight: 80,
       smallestPossibleEventDurationInMinutes: 30,
-      eventAreaOffset: 350,
-      midHourMarkerOffset: 250,
+      eventAreaOffset: 250,
       hourMarkerOffset: 150,
       timePeriodMarkerOffset: 50,
-      totalCanvasWidth: 1200
+      totalCanvasWidth: 1200,
+      eventBlockStripeWidth: 5,
+      getMidHourOffset(){
+        return this.hourMarkerOffset + 50
+      },
+      getSmallestEventBlockHeight() {
+        return this.hourBlockHeight / (60 / this.smallestPossibleEventDurationInMinutes);
+      }
     }
 
     let smallestEventTime = findSmallestEventTime(data.events)
     let largestEventTime = findLargestEventTime(data.events)
 
-    let overlappingBuckets = getOverlappingBuckets(data.events, smallestEventTime, largestEventTime)
-    var { lastBlockIndex, timeBlockEventStartMap } = createTimeBlockBucketStartMap(smallestEventTime, largestEventTime, overlappingBuckets);
+    let overlappingBuckets = getEventBuckets(data.events, smallestEventTime, largestEventTime)
+    var { lastBlockIndex, timeBlockEventStartMap } = createTimeBlockBucketStartMap(canvasOptions, smallestEventTime, largestEventTime, overlappingBuckets);
     paintTimeMarkers(canvasOptions, lastBlockIndex, ctx, timeBlockEventStartMap);
     renderEvents(canvasOptions, ctx, lastBlockIndex, timeBlockEventStartMap, overlappingBuckets)
   }
 
-  function createTimeBlockBucketStartMap(smallestEventTime, largestEventTime, overlappingBuckets) {
+  function createTimeBlockBucketStartMap(canvasOptions, smallestEventTime, largestEventTime, overlappingBuckets) {
     const timeBlockBucketStartMap = {};
-    //TODO: get largest event end time
+    let smallestPossibleEventDurationInMinutes = canvasOptions.smallestPossibleEventDurationInMinutes;
     let smallestEventStartTime = smallestEventTime;
     let largestEventEndTime = largestEventTime;
-    let lastTimeBlock = getDiffInMins(smallestEventStartTime, largestEventEndTime) / 60 // largestEventEndTime.getHours() - smallestEventStartTime.getHours();
+    let totalEventDurationMins = getDiffInMins(smallestEventStartTime, largestEventEndTime)
 
     //splitting into blocks of 30 min each
-    console.log('lasttimeblock', (lastTimeBlock * 60) / 30);
-    let lastBlockIndex = (lastTimeBlock * 60) / 30;
+    let lastBlockIndex = totalEventDurationMins / smallestPossibleEventDurationInMinutes;
     let i = 0;
     let bucketStart = smallestEventStartTime;
     while (i <= lastBlockIndex) {
@@ -88,7 +94,7 @@ window.onload = function () {
       }
       let hrs = new Date(bucketStart).getMinutes();
       bucketStart = new Date(bucketStart);
-      bucketStart.setMinutes(hrs + 30);
+      bucketStart.setMinutes(hrs + smallestPossibleEventDurationInMinutes);
       i++;
     }
     console.log("timeblockeventstartmap", timeBlockBucketStartMap);
@@ -99,19 +105,18 @@ window.onload = function () {
     let totalCanvasWidth = canvasOptions.totalCanvasWidth;
     let eventAreaOffset = canvasOptions.eventAreaOffset;
     let eventAreaWidth = totalCanvasWidth - eventAreaOffset;
-    let hourBlockHeight = canvasOptions.hourBlockHeight;
-    let smallestEventBlockHeight = hourBlockHeight / 2;
+    let smallestEventBlockHeight = canvasOptions.getSmallestEventBlockHeight();
 
     for (let timeBlock = 0; timeBlock <= lastBlockIndex; timeBlock++) {
-      let timeOffset = (timeBlock * (smallestEventBlockHeight)) // (timeBlock*(timeBlockSize + gutter))
+      let timeOffset = (timeBlock * (smallestEventBlockHeight))
       if (!timeBlockEventStartMap[timeBlock].hasEvents) {
         continue //skip time block if it is not in bucket
       }
       let blockTime = timeBlockEventStartMap[timeBlock].time
       let events = overlappingBuckets[blockTime]
       let overlappingEventCount = events.length
-      let width = (eventAreaWidth / overlappingEventCount)
-      renderEventBucket(overlappingEventCount, ctx, events, timeOffset, blockTime, width, canvasOptions);
+      let width = (eventAreaWidth / overlappingEventCount) - canvasOptions.gutter
+      renderEventBucket(ctx, events, timeOffset, blockTime, width, canvasOptions);
     }
   }
 
@@ -119,12 +124,10 @@ window.onload = function () {
     let totalCanvasWidth = canvasOptions.totalCanvasWidth;
     let timePeriodMarkerOffset = canvasOptions.timePeriodMarkerOffset;
     let hourMarkerOffset = canvasOptions.hourMarkerOffset;
-    let midHourMarkerOffset = canvasOptions.midHourMarkerOffset;
+    let midHourMarkerOffset = canvasOptions.getMidHourOffset();
     let eventAreaOffset = canvasOptions.eventAreaOffset;
     let eventAreaWidth = totalCanvasWidth - eventAreaOffset;
-
-    let hourBlockHeight = canvasOptions.hourBlockHeight;
-    let smallestEventBlockHeight = hourBlockHeight / 2;
+    let smallestEventBlockHeight = canvasOptions.getSmallestEventBlockHeight();
     let smallestPossibleEventDurationInMinutes = canvas.smallestPossibleEventDurationInMinutes;
 
     let gutter = canvasOptions.gutter;
@@ -140,9 +143,9 @@ window.onload = function () {
         ctx.fillText(getTimePeriod(blockTime), timePeriodMarkerOffset, (timeBlock * (smallestEventBlockHeight)) + timeMarkerFontSize);
       }
       let timeOffset = (timeBlock * (smallestEventBlockHeight));
-      let markerOffset = isHalfHour(blockTime) ? midHourMarkerOffset : hourMarkerOffset;
+      let markerOffset = isHourStart(blockTime) ? hourMarkerOffset : midHourMarkerOffset;
       ctx.beginPath();
-      ctx.lineWidth = 1;
+      ctx.lineWidth = 0.5;
       ctx.moveTo(markerOffset, timeOffset);
       ctx.lineTo(totalCanvasWidth, timeOffset);
       ctx.strokeStyle = 'gray';
@@ -150,21 +153,19 @@ window.onload = function () {
 
       ctx.font = "10px Arial";
       ctx.fillStyle = 'black';
-      ctx.fillText(`${blockTime} PM`, markerOffset, timeOffset + lineHeight);
+      ctx.fillText(`${getTimeString(blockTime)}`, markerOffset, timeOffset + lineHeight);
     }
     return { smallestEventBlockHeight, eventAreaWidth, smallestPossibleEventDurationInMinutes, eventAreaOffset, gutter, lineHeight };
-
-   
   }
 
-  function renderEventBucket(overlappingEventCount, ctx, events, timeOffset, blockTime, width, canvasOptions) {
+  function renderEventBucket(ctx, events, timeOffset, blockTime, width, canvasOptions) {
+    let eventCount = events.length
     let eventAreaOffset = canvasOptions.eventAreaOffset;
-    let hourBlockHeight = canvasOptions.hourBlockHeight;
-    let smallestEventBlockHeight = hourBlockHeight / 2;
+    let smallestEventBlockHeight = canvasOptions.getSmallestEventBlockHeight();
     let smallestPossibleEventDurationInMinutes = canvasOptions.smallestPossibleEventDurationInMinutes;
     let gutter = canvasOptions.gutter;
     let lineHeight = canvasOptions.lineHeight;
-    for (let eventBlock = 0; eventBlock < overlappingEventCount; eventBlock++) {
+    for (let eventBlock = 0; eventBlock < eventCount; eventBlock++) {
       ctx.fillStyle = "white";
 
       let event = events[eventBlock];
@@ -180,14 +181,22 @@ window.onload = function () {
 
       ctx.fillRect(eventOffset, timeOffset + eventBlockStart, width, eventBlockHeight);
 
+      let eventTextOffset = eventOffset + canvasOptions.eventBlockStripeWidth + 2
+      ctx.fillStyle = 'gray';
+      ctx.font = `${canvasOptions.lineHeight}px sans-serif`;
+      ctx.fillText(`${getTimeString(event.startsOn)}${getTimePeriod(event.startsOn)}-`, eventTextOffset, canvasOptions.lineSpacing + timeOffset + eventBlockStart + lineHeight);
+      
+      ctx.font = `normal bold ${canvasOptions.lineHeight}px sans-serif`
       ctx.fillStyle = 'black';
-      ctx.fillText(`Event time: ${event.startsOn} duration ${eventDuration} offset ${eventOffsetMin}`, eventOffset, timeOffset + eventBlockStart + lineHeight);
-      ctx.fillText(`Event name: ${eventBlock}`, eventOffset, timeOffset + eventBlockStart + lineHeight + lineHeight);
-      ctx.fillText(`Event Location: ${eventBlock}`, eventOffset, timeOffset + eventBlockStart + lineHeight + lineHeight + lineHeight);
+      ctx.fillText(`${event.name}`, eventTextOffset, timeOffset + eventBlockStart + (lineHeight + canvasOptions.lineSpacing)* 2);
+      
+      ctx.font = `normal lighter ${canvasOptions.lineHeight}px sans-serif`
+      ctx.fillStyle = '#00bf00';
+      ctx.fillText(`${event.location}`, eventTextOffset, timeOffset + eventBlockStart + (lineHeight + canvasOptions.lineSpacing) * 3);
 
       //green stripe
       ctx.beginPath();
-      ctx.lineWidth = 5;
+      ctx.lineWidth = canvasOptions.eventBlockStripeWidth;
       ctx.moveTo(eventOffset, timeOffset + eventBlockStart);
       ctx.lineTo(eventOffset, timeOffset + eventBlockStart + eventBlockHeight);
       ctx.strokeStyle = '#00bf00';
@@ -207,8 +216,8 @@ window.onload = function () {
     return new Date(time).getHours() == 12 && new Date(time).getMinutes() === 0;
   }
 
-  function isHalfHour(time) {
-    return new Date(time).getMinutes() === 30
+  function isHourStart(time) {
+    return new Date(time).getMinutes() === 0
   }
 
   function indexEvents(events) {
@@ -266,7 +275,7 @@ window.onload = function () {
     return bucketBounds
   }
 
-  function getOverlappingBuckets(events, smallestEventTime, largestEventTime) {
+  function getEventBuckets(events, smallestEventTime, largestEventTime) {
     let eventIndex = indexEvents(events)
     let bucketBounds = getNonoverlappingBounds(eventIndex, smallestEventTime, largestEventTime)
     let overlappingBuckets = {}
@@ -290,10 +299,17 @@ window.onload = function () {
   }
 
   function getDiffInMins(dateA, dateB) {
-    var diffMs = Math.abs(dateB - dateA); // milliseconds between now & Christmas
+    var diffMs = Math.abs(dateB - dateA);
     let result = Math.floor((diffMs / 1000) / 60);
     console.log(`diff bw ${dateA} & ${dateB} in min ${result}`)
     return result
+  }
+
+  function getTimeString(d){
+    var date = new Date(d)
+    var hrs = ("0" +date.getHours()).slice(-2)
+    var min = ("0" +date.getMinutes()).slice(-2)
+    return `${hrs}:${min}`;
   }
 
   function getDateString(d) {
@@ -310,7 +326,6 @@ window.onload = function () {
     let startsOn = [...events].sort(function (a, b) {
       return new Date(b.startsOn) - new Date(a.startsOn);
     }).pop().startsOn;
-    // console.log("smalles event time", startsOn)
     return new Date(startsOn)
   }
 
@@ -318,7 +333,6 @@ window.onload = function () {
     let endsOn = [...events].sort(function (a, b) {
       return new Date(b.endsOn) - new Date(a.endsOn);
     }).shift().endsOn;
-    // console.log("largest event time", new Date(endsOn))
     return new Date(endsOn)
   }
 }
