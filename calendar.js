@@ -1,64 +1,6 @@
-// import data from 'data.json'
-
 
 window.onload = function () {
-  const data = {
-    events: [
-      {
-        name: 'Sample Item1',
-        location: 'Sample Location',
-        startsOn: "1995-12-17T00:00",
-        endsOn: "1995-12-17T07:00",
-        isAllDay: true
-      },
-      {
-        name: 'Sample Item2',
-        location: 'Sample Location',
-        startsOn: "1995-12-17T00:00",
-        endsOn: "1995-12-17T00:00",
-        isAllDay: true
-      }, 
-      {
-        name: 'Sample Item3',
-        location: 'Sample Location',
-        startsOn: "1995-12-17T00:00",
-        endsOn: "1995-12-17T00:00",
-        isAllDay: true
-      }
-    ]
-  };
-
-  function addEvent(start, end) {
-    data.events.push({
-      name: 'Sample Item',
-      location: 'Sample Location',
-      startsOn: start,
-      endsOn: end,
-      isAllDay: false
-    })
-  }
-  // addEvent("1995-12-17T07:00", "1995-12-17T08:00")
-  // addEvent("1995-12-17T07:30", "1995-12-17T09:00")
-  // addEvent("1995-12-17T08:00", "1995-12-17T08:30")
-  // addEvent("1995-12-17T09:00", "1995-12-17T09:30")
-  // addEvent("1995-12-17T09:00", "1995-12-17T10:00")
-  // addEvent("1995-12-17T09:00", "1995-12-17T10:30")
-  // addEvent("1995-12-17T09:30", "1995-12-17T10:30")
-  // addEvent("1995-12-17T09:30", "1995-12-17T11:00")
-  // addEvent("1995-12-17T10:00", "1995-12-17T11:00")
-  // addEvent("1995-12-17T10:30", "1995-12-17T11:30")
-  // addEvent("1995-12-17T11:30", "1995-12-17T12:30")
-
-  // addEvent("1995-12-17T09:00", "1995-12-19T10:00")
-  addEvent("1995-12-17T09:00", "1995-12-17T10:00")
-  addEvent("1995-12-17T11:00", "1995-12-17T12:30")
-  addEvent("1995-12-17T13:00", "1995-12-17T14:30")
-  addEvent("1995-12-17T14:00", "1995-12-17T15:00")
-  addEvent("1995-12-17T17:00", "1995-12-17T20:00")
-  addEvent("1995-12-17T17:30", "1995-12-17T19:00")
-  addEvent("1995-12-17T17:00", "1995-12-17T17:30")
-  addEvent("1995-12-17T14:00", "1995-12-17T17:30")
-  console.log(data)
+   console.log(data)
 
   renderCalendar();
 
@@ -279,7 +221,6 @@ window.onload = function () {
     const nameYOffset = eventYOffset + (isUnitEvent || event.isAllDay ? (lineHeight + canvasOptions.lineSpacing) : (lineHeight + canvasOptions.lineSpacing) * 2);
     const nameXOffset = isUnitEvent || event.isAllDay ? eventTextOffset + ctx.measureText("00:00AM-").width : eventTextOffset;
     const nameText = nameXOffset + ctx.measureText(event.name).width < eventXOffset + width ? event.name : event.name.slice(0, "00:00AM-".length - 3) + "...";
-    // console.log(`name x-${nameXOffset + ctx.measureText(event.name).width} width: ${eventXOffset + width} diff:${(eventXOffset + width) - (nameXOffset + ctx.measureText(event.name).width)}`);
     ctx.fillText(nameText, nameXOffset, nameYOffset);
   }
 
@@ -315,22 +256,6 @@ window.onload = function () {
     ctx.stroke();
   }
 
-  function getTimePeriod(time) {
-    return new Date(time).getHours() >= 0 && new Date(time).getHours() < 12 ? 'AM' : 'PM';
-  }
-
-  function isAMStart(time) {
-    return new Date(time).getHours() == 0 && new Date(time).getMinutes() === 0;
-  }
-
-  function isPMStart(time) {
-    return new Date(time).getHours() == 12 && new Date(time).getMinutes() === 0;
-  }
-
-  function isHourStart(time) {
-    return new Date(time).getMinutes() === 0
-  }
-
   function indexEvents(events) {
     let eventIndex = {}
     events.forEach(event => {
@@ -355,7 +280,6 @@ window.onload = function () {
     while (nextBlock < endDate) {
 
       if (getDateString(nextBlock) in eventIndex) {
-        // console.log(`next block  found ${getDateString(nextBlock)}`)
         let eventStart = getDateString(nextBlock)
         if (new Date(eventStart) >= new Date(largestKnownTime)) {
           console.log("non overlapping event", eventStart)
@@ -365,24 +289,16 @@ window.onload = function () {
         eventIndex[eventStart].forEach((event) => {
           if (new Date(event.endsOn) > new Date(largestKnownTime)) {
             largestKnownTime = event.endsOn
-            // console.log('------new largestKnownTime', largestKnownTime)
-          }
-          else {
-            // console.log(`${eventEnd} is less than largestKnownTime ${largestKnownTime}`)
           }
         })
-      }
-      else {
-        console.log(`next block not found ${getDateString(nextBlock)}`)
       }
 
       let hrs = new Date(nextBlock).getMinutes()
       nextBlock = new Date(nextBlock)
       nextBlock.setMinutes(hrs + 30)
-      // console.log(`next block is ${getDateString(nextBlock)}`)
     }
     bucketBounds.push(getDateString(endDate)) //adding boundary to makesure index+1 works
-    console.log('event buckets', bucketBounds)
+    console.log('bucket bounds', bucketBounds)
     return bucketBounds
   }
 
@@ -400,38 +316,10 @@ window.onload = function () {
             overlappingBuckets[bucketStart] = [event]
           }
         }
-        else {
-          console.log(`${event.startsOn} ${event.endsOn} ${bucketStart} not in bucket`)
-        }
       }
     })
-    console.log('overlapping buckets', overlappingBuckets)
+    console.log('buckets', overlappingBuckets)
     return overlappingBuckets
-  }
-
-  function getDiffInMins(dateA, dateB) {
-    var diffMs = Math.abs(dateB - dateA);
-    let result = Math.floor((diffMs / 1000) / 60);
-    console.log(`diff bw ${dateA} & ${dateB} in min ${result}`)
-    return result
-  }
-
-  function getTimeString(d) {
-    var date = new Date(d)
-    var convertedHrs = date.getHours() == 12 ? 12 : date.getHours()%12
-    var hrs = ("0" + convertedHrs).slice(-2)
-    var min = ("0" + date.getMinutes()).slice(-2)
-    return `${hrs}:${min}`;
-  }
-
-  function getDateString(d) {
-    var date = ("0" + d.getDate()).slice(-2)
-    var month = ("0" + (d.getMonth() + 1)).slice(-2)
-    var year = d.getFullYear()
-    var hrs = ("0" + d.getHours()).slice(-2)
-    var min = ("0" + d.getMinutes()).slice(-2)
-    var datestring = year + "-" + month + "-" + date + "T" + hrs + ":" + min;
-    return datestring;
   }
 
   function findSmallestEventTime(events) {
