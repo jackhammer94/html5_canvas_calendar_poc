@@ -1,59 +1,42 @@
 // import data from 'data.json'
 
+
 window.onload = function () {
   const data = {
     events: [
-      {
-        name: 'testEvent-1y',
-        location: 'india',
-        startsOn: "1995-12-17T09:00",
-        endsOn: "1995-12-17T10:00",
-        isAllDay: true
-      },
-      {
-        name: 'testEvent-2',
-        location: 'india',
-        startsOn: "1995-12-17T11:00",
-        endsOn: "1995-12-17T12:30",
-        isAllDay: true
-      },
-      {
-        name: 'testEvent-3',
-        location: 'india',
-        startsOn: "1995-12-17T13:00",
-        endsOn: "1995-12-17T14:30",
-        isAllDay: true
-      },
-      {
-        name: 'testEvent-4',
-        location: 'india',
-        startsOn: "1995-12-17T14:00",
-        endsOn: "1995-12-17T15:00",
-        isAllDay: true
-      },
-      {
-        name: 'testEvent-5',
-        location: 'india',
-        startsOn: "1995-12-17T17:00",
-        endsOn: "1995-12-17T20:00",
-        isAllDay: true
-      },
-      {
-        name: 'testEvent-6',
-        location: 'india',
-        startsOn: "1995-12-17T17:30",
-        endsOn: "1995-12-17T19:00",
-        isAllDay: true
-      },
-      {
-        name: 'testEvent-7',
-        location: 'india',
-        startsOn: "1995-12-17T17:00",
-        endsOn: "1995-12-17T17:30",
-        isAllDay: true
-      }
     ]
   };
+
+  function addEvent(start, end){
+    data.events.push({
+      name: 'testEvent',
+      location: 'india',
+      startsOn: start,
+      endsOn: end,
+      isAllDay: false
+    })
+  }
+  // addEvent("1995-12-17T07:00", "1995-12-17T08:00")
+  // addEvent("1995-12-17T07:30", "1995-12-17T09:00")
+  // addEvent("1995-12-17T08:00", "1995-12-17T08:30")
+  // addEvent("1995-12-17T09:00", "1995-12-17T09:30")
+  // addEvent("1995-12-17T09:00", "1995-12-17T10:00")
+  // addEvent("1995-12-17T09:00", "1995-12-17T10:30")
+  // addEvent("1995-12-17T09:30", "1995-12-17T10:30")
+  // addEvent("1995-12-17T09:30", "1995-12-17T11:00")
+  // addEvent("1995-12-17T10:00", "1995-12-17T11:00")
+  // addEvent("1995-12-17T10:30", "1995-12-17T11:30")
+  // addEvent("1995-12-17T11:30", "1995-12-17T12:30")
+
+  addEvent("1995-12-17T09:00", "1995-12-19T10:00")
+  addEvent("1995-12-17T09:00", "1995-12-17T10:00")
+  addEvent("1995-12-17T11:00", "1995-12-17T12:30")
+  addEvent("1995-12-17T13:00", "1995-12-17T14:30")
+  addEvent("1995-12-17T14:00", "1995-12-17T15:00")
+  addEvent("1995-12-17T17:00", "1995-12-17T20:00")
+  addEvent("1995-12-17T17:30", "1995-12-17T19:00")
+  addEvent("1995-12-17T17:00", "1995-12-17T17:30")
+  
   console.log(data)
 
   renderCalendar();
@@ -149,14 +132,15 @@ window.onload = function () {
     let timeMarkerFontSize = canvasOptions.timeMarkerFontSize;
 
     //paint time markers
-    for (timeBlock = 0; timeBlock <= lastBlockIndex; timeBlock++) {
-      if (timeBlock % 12 == 0) {
+    for (let timeBlock = 0; timeBlock <= lastBlockIndex; timeBlock++) {
+      let blockTime = timeBlockEventStartMap[timeBlock].time
+      if (isAMStart(blockTime) || isPMStart(blockTime) || timeBlock == 0) {
         ctx.font = `${timeMarkerFontSize}px Arial`;
         ctx.fillStyle = 'black';
-        ctx.fillText(`PM`, timePeriodMarkerOffset, (timeBlock * (hourBlockHeight)) + timeMarkerFontSize);
+        ctx.fillText(getTimePeriod(blockTime), timePeriodMarkerOffset, (timeBlock * (smallestEventBlockHeight)) + timeMarkerFontSize);
       }
       let timeOffset = (timeBlock * (smallestEventBlockHeight));
-      let markerOffset = isHalfHour(timeBlockEventStartMap[timeBlock].time) ? midHourMarkerOffset : hourMarkerOffset;
+      let markerOffset = isHalfHour(blockTime) ? midHourMarkerOffset : hourMarkerOffset;
       ctx.beginPath();
       ctx.lineWidth = 1;
       ctx.moveTo(markerOffset, timeOffset);
@@ -166,9 +150,11 @@ window.onload = function () {
 
       ctx.font = "10px Arial";
       ctx.fillStyle = 'black';
-      ctx.fillText(`${timeBlockEventStartMap[timeBlock].time} PM`, markerOffset, timeOffset + lineHeight);
+      ctx.fillText(`${blockTime} PM`, markerOffset, timeOffset + lineHeight);
     }
     return { smallestEventBlockHeight, eventAreaWidth, smallestPossibleEventDurationInMinutes, eventAreaOffset, gutter, lineHeight };
+
+   
   }
 
   function renderEventBucket(overlappingEventCount, ctx, events, timeOffset, blockTime, width, canvasOptions) {
@@ -209,6 +195,18 @@ window.onload = function () {
     }
   }
 
+  function getTimePeriod(time) {
+    return new Date(time).getHours() >= 0 && new Date(time).getHours() < 12 ? 'AM' : 'PM';
+  }
+
+  function isAMStart(time) {
+    return new Date(time).getHours() == 0 && new Date(time).getMinutes() === 0;
+  }
+
+  function isPMStart(time) {
+    return new Date(time).getHours() == 12 && new Date(time).getMinutes() === 0;
+  }
+
   function isHalfHour(time) {
     return new Date(time).getMinutes() === 30
   }
@@ -231,7 +229,6 @@ window.onload = function () {
     let startDate = smallestEventTime
     let endDate = largestEventTime
     let largestKnownTime = getDateString(startDate)
-    console.log('largeknowntime', largestKnownTime)
     let nextBlock = startDate
     let bucketBounds = []
 
