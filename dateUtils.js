@@ -4,20 +4,20 @@ function getDiffInMins(dateA, dateB) {
   return result
 }
 
-function getTimeString(d) {
-  var date = new Date(d)
+function getTimeString(dateString) {
+  var date = new Date(dateString)
   var convertedHrs = date.getHours() == 12 ? 12 : date.getHours()%12
   var hrs = ("0" + convertedHrs).slice(-2)
   var min = ("0" + date.getMinutes()).slice(-2)
   return `${hrs}:${min}`;
 }
 
-function getDateString(d) {
-  var date = ("0" + d.getDate()).slice(-2)
-  var month = ("0" + (d.getMonth() + 1)).slice(-2)
-  var year = d.getFullYear()
-  var hrs = ("0" + d.getHours()).slice(-2)
-  var min = ("0" + d.getMinutes()).slice(-2)
+function getDateString(dateString) {
+  var date = ("0" + dateString.getDate()).slice(-2)
+  var month = ("0" + (dateString.getMonth() + 1)).slice(-2)
+  var year = dateString.getFullYear()
+  var hrs = ("0" + dateString.getHours()).slice(-2)
+  var min = ("0" + dateString.getMinutes()).slice(-2)
   var datestring = year + "-" + month + "-" + date + "T" + hrs + ":" + min;
   return datestring;
 }
@@ -36,4 +36,10 @@ function isPMStart(time) {
 
 function isHourStart(time) {
   return new Date(time).getMinutes() === 0
+}
+
+function isSameDay(dateA, dateB) {
+  return dateA.getFullYear() === dateB.getFullYear() &&
+    dateA.getMonth() === dateB.getMonth() &&
+    dateA.getDate() === dateB.getDate();
 }

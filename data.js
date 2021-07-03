@@ -6,20 +6,6 @@ const data = {
       startsOn: "1995-12-17T00:00",
       endsOn: "1995-12-17T07:00",
       isAllDay: true
-    },
-    {
-      name: 'Sample Item2',
-      location: 'Sample Location',
-      startsOn: "1995-12-17T00:00",
-      endsOn: "1995-12-17T00:00",
-      isAllDay: true
-    }, 
-    {
-      name: 'Sample Item3',
-      location: 'Sample Location',
-      startsOn: "1995-12-17T00:00",
-      endsOn: "1995-12-17T00:00",
-      isAllDay: true
     }
   ]
 };

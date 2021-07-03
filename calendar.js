@@ -2,6 +2,11 @@
 window.onload = function () {
    console.log(data)
 
+   /*
+    Use data object in data.js to load events
+    Note: Event times should be in 24 hr format, allDay flag should be set to true for all day events
+
+   */
   renderCalendar();
 
   function renderCalendar() {
@@ -36,10 +41,10 @@ window.onload = function () {
     }
 
     let normalEvents = data.events.filter(event => !event.isAllDay)
-    let allDayEvents = data.events.filter(event => event.isAllDay)
-    canvasOptions.allDayEventsCount = allDayEvents.length
     let smallestEventTime = findSmallestEventTime(normalEvents)
     let largestEventTime = findLargestEventTime(normalEvents)
+    let allDayEvents = data.events.filter(event => event.isAllDay && isSameDay(new Date(event.startsOn), smallestEventTime))
+    canvasOptions.allDayEventsCount = allDayEvents.length
 
     let overlappingBuckets = getEventBuckets(normalEvents, smallestEventTime, largestEventTime)
     var { timeBlockEventStartMap } = createTimeBlockBucketStartMap(canvasOptions, smallestEventTime, largestEventTime, overlappingBuckets);
@@ -238,7 +243,7 @@ window.onload = function () {
     const lineHeightOffset = isUnitEvent || event.isAllDay ? (lineHeight + canvasOptions.lineSpacing) : (lineHeight + canvasOptions.lineSpacing) * 3;
     const locationYOffset = eventYOffset + lineHeightOffset
 
-    const lineWidthOffset = isUnitEvent || event.isAllDay ? ctx.measureText("00:00AM-").width + ctx.measureText(event.name).width : 0
+    const lineWidthOffset = isUnitEvent || event.isAllDay ? ctx.measureText("00:00AM-").width + ctx.measureText(event.name).width + canvasOptions.gutter : 0
     const locationXOffset = eventXOffset + canvasOptions.eventBlockStripeWidth + 2 + lineWidthOffset;
 
     const locationText = locationXOffset + ctx.measureText(event.location).width < eventXOffset + width ? event.location : event.location.slice(0, event.name.length - 3) + "...";
